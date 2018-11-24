@@ -1,0 +1,114 @@
+- hosts: all
+  become: yes # This means that all tasks will be executed with sudo
+  tasks:
+    - name:    Add Docker GPG key
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+    - name:    Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} edge
+
+    - name: Install list of packages
+      apt:
+        name: [ 'apt-transport-https',  'ca-certificates',  'curl',
+                'software-properties-common',  'docker-ce']
+        state: present
+        update_cache: yes
+
+
+    - name: Copy docker API configuration
+      copy:
+        src: "{{ playbook_dir }}/files/daemon.json"
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Create docker systemd config files
+      file:
+        path: /etc/systemd/system/docker.service.d
+        state: directory
+        mode: 0755
+
+    - name: Copy docker API configuration
+      copy:
+        src: "{{ playbook_dir }}/files/hosts.conf"
+        dest: /etc/systemd/system/docker.service.d/hosts.conf
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Reload docker service
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: docker
+
+    - name: Install Python 3.6
+      apt:
+        name: ['python3.6',
+               'python3-pip']
+        state: present
+
+    - name: Install docker compose
+      pip:
+        name: ['docker-compose',
+               'setuptools', 'pyyaml']
+        state: present
+
+    - name: Run with inline v2 compose
+      docker_service:
+        project_name: alytics_service
+        definition:
+          version: '0.1'
+          services:
+            db:
+              image: postgres
+            highcharts:
+              image: onsdigital/highcharts-export-node
+              ports:
+                - "8889:8080"
+
+            #            web:
+            #              build: "{{ playbook_dir }}/flask"
+            #              command: "python manage.py runserver 0.0.0.0:8000"
+            #              volumes:
+            #                - "{{ playbook_dir }}/flask:/code"
+            #              ports:
+            #                - "8000:8000"
+            #              depends_on:
+            #                - db
+
+      register: compose_output
+
+    - debug:
+        var: compose_output
+
+#
+#      - assert:
+#          that:
+#          - "web.flask_web_1.state.running"
+#          - "db.flask_db_1.state.running"
+#
+#    - name: pull an onsdigital image
+#      docker_image:
+#        name: onsdigital/highcharts-export-node
+#
+#    - name: build onsdigital image
+#      path: /path/to/build/dir
+#        name: highcharts-image
+
+#    - name: Create docker
+#      docker:
+#        name: highcharts
+#        image: onsdigital/highcharts-export-node
+#        state: started
+#        ports:
+#        - "8889:8080"
+
+#    - name: Create virtualenv
+#      become: no
+#      pip:
+#        virtualenv: "{{ venv_path }}"
+#        virtualenv_python: python3.6
+#        requirements: "{{ requirements_path }}"
