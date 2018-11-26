@@ -20,6 +20,15 @@
 ```bash
 sudo apt install virtualbox vagrant
 vagrant up 
+# troubleshooting
+vagrant ssh
+sudo docker container ls
+# если в списке нет alytics_point_generator
+# а его там не будет, и х.з почему
+# то нужно выйти и сделать provision еще раз
+exit
+vagrant provision
+# теперь всё должно работать
 firefox http://127.0.0.1:5001/ # or your favorite web browser
 ```
 
@@ -35,3 +44,5 @@ t+2/t
 ```
 
 t - unix timestamp
+
+

@@ -6,15 +6,14 @@ from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 app = Flask(__name__)
 
-# url = urlparse.urlparse(os.environ.get(‘PG_URL’))
+pg_url = urlparse(os.environ.get('PG_URL'))
 
-url = urlparse("postgresql://alytics:alytics@localhost:5433/alytics")
 pool = ThreadedConnectionPool(1, 20,
-                              database=url.path[1:],
-                              user=url.username,
-                              password=url.password,
-                              host=url.hostname,
-                              port=url.port)
+                              database=pg_url.path[1:],
+                              user=pg_url.username,
+                              password=pg_url.password,
+                              host=pg_url.hostname,
+                              port=pg_url.port)
 
 @contextmanager
 def get_db_connection():
@@ -94,7 +93,7 @@ def format_points_data(data, function_name):
     return out_data
 
 
-@app.route('/points', methods=['POST'])
+@app.route('/', methods=['POST'])
 def get_points():
     jsn = request.json
     function_name, interval, dt, error = validate_request_data(jsn)

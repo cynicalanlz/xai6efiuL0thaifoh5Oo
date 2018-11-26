@@ -14,21 +14,19 @@ from uuid import uuid4
 from celery import Celery
 app = Flask(__name__)
 
-# url = urlparse.urlparse(os.environ.get(‘PG_URL’))
-# url = urlparse.urlparse(os.environ.get(‘CELERY_BROKER_URL’))
-# url = urlparse.urlparse(os.environ.get(‘CELERY_RESULT_BACKEND’))
+pg_url = urlparse(os.environ.get('PG_URL'))
+highcharts_url =  os.environ.get('HIGHCHARTS_URL')
+points_generator_url = os.environ.get('POINTS_GENERATOR_URL')
 
-app.config['CELERY_BROKER_URL'] = 'amqp://alytics:alytics@localhost:5673/'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6380/'
+app.config['CELERY_BROKER_URL'] = os.environ.get('CELERY_BROKER_URL')
+app.config['CELERY_RESULT_BACKEND'] = os.environ.get('CELERY_RESULT_BACKEND')
 
-
-url = urlparse("postgresql://alytics:alytics@localhost:5433/alytics")
 pool = ThreadedConnectionPool(1, 20,
-                              database=url.path[1:],
-                              user=url.username,
-                              password=url.password,
-                              host=url.hostname,
-                              port=url.port)
+                              database=pg_url.path[1:],
+                              user=pg_url.username,
+                              password=pg_url.password,
+                              host=pg_url.hostname,
+                              port=pg_url.port)
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
@@ -76,13 +74,12 @@ def validate_request_data(form_data):
 
 
 def get_points_data(function_name, interval, dt):
-
     jsn = {
         "function": function_name,
         "interval": interval,
         "dt": dt}
     params = json.dumps(jsn).encode('utf8')
-    req = urllib.request.Request('http://127.0.0.1:5002/points',
+    req = urllib.request.Request(points_generator_url,
                                  data=params,
                                  headers={'content-type': 'application/json'})
     response = urllib.request.urlopen(req)
@@ -90,7 +87,7 @@ def get_points_data(function_name, interval, dt):
 
 
 def get_image_data(points):
-    req = urllib.request.Request('http://127.0.0.1:8882/',
+    req = urllib.request.Request(highcharts_url,
                                  data=points,
                                  headers={'content-type': 'application/json'})
     try:
