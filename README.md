@@ -22,3 +22,16 @@ sudo apt install virtualbox vagrant
 vagrant up 
 firefox http://127.0.0.1:5001/ # or your favorite web browser
 ```
+
+### Как выглядит
+
+![alt text](img.jpg)
+
+### Поддержка функций
+
+```
+sin(t)
+t+2/t
+```
+
+t - unix timestamp
