@@ -1,0 +1,5 @@
+pg_user: alytics
+pg_pass: alytics
+pg_url: "postgresql://{{ pg_user }}:{{ pg_pass }}@localhost:5433"
+rabbit_user: alytics
+rabbit_pass: alytics

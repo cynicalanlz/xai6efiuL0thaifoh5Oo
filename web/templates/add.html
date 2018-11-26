@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Добавить функцию</title>
+</head>
+<body>
+  <p>{{error}}</p>
+  <form method="POST">
+      <div>
+            <label>Функция</label><br>
+            <input type="radio" name="function" value="t+2/t">t+2/t<br>
+            <input type="radio" name="function" value="sin(t)"> sin(t)<br>
+      </div>
+      <label>Интервал</label><br>
+      <input type="text" name="interval"/><br>
+      <label>Шаг</label><br>
+      <input type="text" name="dt"/><br>
+      <input type="submit" value="Отправить"/>
+
+  </form>
+</body>
+</html>

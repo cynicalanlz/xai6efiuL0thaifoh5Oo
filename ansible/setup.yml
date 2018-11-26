@@ -1,5 +1,8 @@
 - hosts: all
   become: yes # This means that all tasks will be executed with sudo
+  vars_files:
+    - vars.yml
+
   tasks:
     - name:    Add Docker GPG key
       apt_key: url=https://download.docker.com/linux/ubuntu/gpg
@@ -60,55 +63,70 @@
       docker_service:
         project_name: alytics_service
         definition:
-          version: '0.1'
+          version: '2'
           services:
-            db:
-              image: postgres
+            postgres:
+              build: "{{ playbook_dir }}/../postgres_init"
+              environment:
+                POSTGRES_USER: "{{ pg_user }}"
+                POSTGRES_PASSWORD: "{{ pg_pass }}"
+              ports:
+                - "5433:5432"
+
+            redis:
+              image: redis:5
+              ports:
+                - "6380:6379"
+
+            rabbit:
+              hostname: rabbit
+              image: rabbitmq:latest
+              environment:
+                RABBITMQ_DEFAULT_USER: "{{ rabbit_user }}"
+                RABBITMQ_DEFAULT_PASS: "{{ rabbit_pass }}"
+              ports:
+                - "5673:5672"
+
             highcharts:
               image: onsdigital/highcharts-export-node
               ports:
-                - "8889:8080"
+                - "8882:8080"
 
-            #            web:
-            #              build: "{{ playbook_dir }}/flask"
-            #              command: "python manage.py runserver 0.0.0.0:8000"
-            #              volumes:
-            #                - "{{ playbook_dir }}/flask:/code"
-            #              ports:
-            #                - "8000:8000"
-            #              depends_on:
-            #                - db
+            points_generator:
+              build: "{{ playbook_dir }}/../points_generator"
+              environment:
+                PG_URL: "{{ pg_url }}"
+              ports:
+                - "5002:8000"
+              links:
+                - postgres
+              depends_on:
+                - postgres
+
+            web:
+              build: "{{ playbook_dir }}/../web"
+              environment:
+                PG_URL: "{{ pg_url }}"
+              ports:
+                - "5001:8000"
+              links:
+                - postgres
+                - rabbit
+                - redis
+              depends_on:
+                - postgres
+                - rabbit
+                - redis
+
 
       register: compose_output
 
     - debug:
         var: compose_output
 
-#
-#      - assert:
-#          that:
-#          - "web.flask_web_1.state.running"
-#          - "db.flask_db_1.state.running"
-#
-#    - name: pull an onsdigital image
-#      docker_image:
-#        name: onsdigital/highcharts-export-node
-#
-#    - name: build onsdigital image
-#      path: /path/to/build/dir
-#        name: highcharts-image
+#    - debug:
+#        var: ansible_facts
+#    - assert:
+#        that:
+#        - "db.flask_db_1.state.running"
 
-#    - name: Create docker
-#      docker:
-#        name: highcharts
-#        image: onsdigital/highcharts-export-node
-#        state: started
-#        ports:
-#        - "8889:8080"
-
-#    - name: Create virtualenv
-#      become: no
-#      pip:
-#        virtualenv: "{{ venv_path }}"
-#        virtualenv_python: python3.6
-#        requirements: "{{ requirements_path }}"

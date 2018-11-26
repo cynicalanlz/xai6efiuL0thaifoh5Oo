@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Главная</title>
+</head>
+<body>
+    <div style="margin: 0 auto; width: 960px;">
+        <form method="POST" action="/update">
+            <input type="submit" value="Обновить" style="float:left;"/>
+            <a href="/add" style="float:right;">Добавить</a>
+            <br>
+            <br>
+            <table>
+                <tr>
+                    <th></th>
+                    <th>Функция</th>
+                    <th>График</th>
+                    <th>Интервал, дни</th>
+                    <th>Шаг, часы</th>
+                    <th>Дата обработки</th>
+                </tr>
+                    {% for item in table_data %}
+                    <tr>
+                        <td><input type="checkbox" value="{{item.id}}" name="id"/></td>
+                        <td>{{item.func}}</td>
+                        {% if not item.error %}
+                        <td><img src="data:;base64,{{ item.graph }}"/ style="float:left;"></td>
+                        {% else %}
+                        <td>{{item.error}}</td>
+                        {% endif %}
+                        <td>{{item.time_interval}}</td>
+                        <td>{{item.dt}}</td>
+                        <td>{{item.ts}}</td>
+                    </tr>
+                    {% endfor %}
+            </table>
+        </form>
+    </div>
+</body>
+</html>
